@@ -97,6 +97,5 @@ class ColorExtractor():
                 y_pos = 10
             else:
                 count += 1
-
         image.save(filename, format='PNG', quality=95)
         return filename
