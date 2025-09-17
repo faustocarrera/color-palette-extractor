@@ -4,8 +4,8 @@
 Utils
 """
 
-from os import path
 from datetime import datetime
+from pathlib import Path
 
 
 class VerboseLogger:
@@ -20,14 +20,20 @@ class VerboseLogger:
             print(f"{message}")
 
 
-def get_destination_path(folder, name):
+def get_destination_path(folder: Path, name: str) -> Path:
     "Get destination path"
-    return path.join(folder, name) if folder else name
+    return folder.joinpath(name) if folder else name
 
 
-def get_file_dir(file_path):
+def get_file_dir(file_path: Path) -> Path:
     "Get directory based on path"
-    return path.dirname(path.realpath(file_path))
+    # Check if path exists
+    if not file_path.exists():
+        raise ValueError(f"Invalid path: {file_path}")
+    # Handle directories
+    if file_path.is_dir():
+        return file_path
+    return file_path.parent
 
 
 def get_filename(name, new_name):
