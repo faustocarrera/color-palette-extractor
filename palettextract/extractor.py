@@ -6,6 +6,7 @@ Extract the most dominant colors from an image and create a color palette.
 """
 
 from pathlib import Path
+import json
 import pandas as pd
 from PIL import Image
 from PIL import ImageDraw
@@ -24,17 +25,20 @@ class ColorExtractor():
         self.size = 1020
         self.logger = pu.VerboseLogger(verbose)
 
-    def color_palette(self, input_path: Path) -> str:
+    def color_palette(self, input_path: Path) -> list:
         "Generate the color palette"
         self.logger.log(f"Extracting colors from {input_path}")
         image = Image.open(input_path).convert('RGB')
         colors = self.__get_colors(image)
-        palette = self.__generate_palette(
-            colors,
-            pu.get_file_dir(input_path),
-            pu.get_name_by_path(input_path, False)
-        )
-        return palette
+        destination = pu.get_file_dir(input_path)
+        filename = pu.get_name_by_path(input_path, False)
+        # generate files
+        self.logger.log(f"Generating color palette with {len(colors)} colors")
+        palette = self.__generate_palette(colors, destination, filename)
+        txt = self.__generate_txt(colors, destination, filename)
+        jsn = self.__generate_json(input_path.name, colors, destination, filename)
+        self.logger.log(f"Files saved to {destination}")
+        return [palette, txt, jsn]
 
     def __get_colors(self, image):
         "Get colors in image"
@@ -98,4 +102,26 @@ class ColorExtractor():
             else:
                 count += 1
         image.save(filename, format='PNG', quality=95)
+        return filename
+
+    def __generate_txt(self, colors, folder, name) -> str:
+        "Generate text file with colors"
+        filename = pu.get_destination_path(folder, f"palette_{name}.txt")
+        with open(filename, 'w', encoding='utf-8') as f:
+            for color in colors:
+                f.write(f"{color['color'][1]}\n")
+        return filename
+    
+    def __generate_json(self, original_file, colors, folder, name) -> str:
+        "Generate json file with colors"
+        filename = pu.get_destination_path(folder, f"palette_{name}.json")
+        response = {}
+        response['total_colors'] = len(colors)
+        response['image_info'] = {
+            'filename': f"{original_file}",
+            'processed_date': pu.get_current_date()
+        }
+        response['colors'] = [color['color'][1] for color in colors]
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(response, f, indent=4)
         return filename
