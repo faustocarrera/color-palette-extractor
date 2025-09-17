@@ -40,9 +40,9 @@ The script generates several output files:
 
 ### Color Data Files
 
-- `[image_name]_palette.txt`: List of colors in hex format
-- `[image_name]_palette.json`: JSON format with additional color information
-- `[image_name]_palette.png`: Visual color palette with swatches
+- `palette_[image_name].txt`: List of colors in hex format
+- `palette_[image_name].json`: JSON format with additional color information
+- `palette_[image_name].png`: Visual color palette with swatches
 
 ### Example Output Format
 
@@ -61,15 +61,17 @@ The script generates several output files:
 ```json
 {
   "colors": [
-    {
-      "hex": "#FF6B6B",
-      "percentage": 23.5
-    }
+    "#FF6B6B",
+    "#175459",
+    "#175459",
+    "#14272e",
+    "#192e31",
+    "#175459",
+    "#f8cb32"
   ],
-  "total_colors": 100,
+  "total_colors": 64,
   "image_info": {
     "filename": "sunset.jpg",
-    "dimensions": [1920, 1080],
     "processed_date": "2025-09-15T10:30:00"
   }
 }
