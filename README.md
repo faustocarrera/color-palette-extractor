@@ -31,6 +31,7 @@ pandas>1.0
 
 ```bash
 python color_extractor.py input_image.jpg
+python color_extractor.py images/
 ```
 
 ## Output
