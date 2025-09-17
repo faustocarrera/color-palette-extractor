@@ -12,6 +12,7 @@ from PIL import Image
 from PIL import ImageDraw
 from . import color_utils as cu
 from . import utils as pu
+from .image_scanner import ImageScanner
 
 
 class ColorExtractor():
@@ -24,21 +25,26 @@ class ColorExtractor():
         self.limit = 64
         self.size = 1020
         self.logger = pu.VerboseLogger(verbose)
+        self.iscanner = ImageScanner()
 
-    def color_palette(self, input_path: Path) -> list:
+    def color_palette(self, input_path: Path) -> dict:
         "Generate the color palette"
+        result = {}
         self.logger.log(f"Extracting colors from {input_path}")
-        image = Image.open(input_path).convert('RGB')
-        colors = self.__get_colors(image)
         destination = pu.get_file_dir(input_path)
-        filename = pu.get_name_by_path(input_path, False)
-        # generate files
-        self.logger.log(f"Generating color palette with {len(colors)} colors")
-        palette = self.__generate_palette(colors, destination, filename)
-        txt = self.__generate_txt(colors, destination, filename)
-        jsn = self.__generate_json(input_path.name, colors, destination, filename)
-        self.logger.log(f"Files saved to {destination}")
-        return [palette, txt, jsn]
+        image_files = self.iscanner.scan_directory(input_path)
+        for file_path in image_files:
+            image = Image.open(file_path).convert('RGB')
+            colors = self.__get_colors(image)
+            filename = pu.get_name_by_path(file_path, False)
+            # generate files
+            self.logger.log(f"Generating color palette from {file_path.name} with {len(colors)} colors")
+            palette = self.__generate_palette(colors, destination, filename)
+            txt = self.__generate_txt(colors, destination, filename)
+            jsn = self.__generate_json(input_path.name, colors, destination, filename)
+            self.logger.log(f"Files saved to {destination}")
+            result[file_path.name] = [palette, txt, jsn]
+        return result
 
     def __get_colors(self, image):
         "Get colors in image"

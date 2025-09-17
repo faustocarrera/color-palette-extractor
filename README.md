@@ -25,13 +25,13 @@ pip install -r requirements.txt
 Pillow>=7
 click>=7.0
 pandas>1.0
-webcolors>=1.12
 ```
 
 ## Basic Usage
 
 ```bash
 python color_extractor.py input_image.jpg
+python color_extractor.py images/
 ```
 
 ## Output
