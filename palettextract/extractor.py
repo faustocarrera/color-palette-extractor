@@ -92,7 +92,7 @@ class ColorExtractor():
 
     def __generate_palette(self, colors, folder, name) -> Path:
         "Generate paletter from image"
-        filename = pu.get_destination_path(folder, f"palette_{name}.png")
+        filename = pu.get_destination_path(folder, f"{name}_palette.png")
         x_pos, y_pos = 10, 10
         sqr_side = 125
         size = (sqr_side * self.colors_row) + 20
@@ -119,7 +119,7 @@ class ColorExtractor():
 
     def __generate_txt(self, colors, folder, name) -> Path:
         "Generate text file with colors"
-        filename = pu.get_destination_path(folder, f"palette_{name}.txt")
+        filename = pu.get_destination_path(folder, f"{name}_palette.txt")
         with open(filename, 'w', encoding='utf-8') as f:
             for color in colors:
                 f.write(f"{color['color'][1]}\n")
@@ -127,7 +127,7 @@ class ColorExtractor():
 
     def __generate_json(self, original_file, colors, folder, name) -> Path:
         "Generate json file with colors"
-        filename = pu.get_destination_path(folder, f"palette_{name}.json")
+        filename = pu.get_destination_path(folder, f"{name}_palette.json")
         response = {}
         response['total_colors'] = len(colors)
         response['image_info'] = {

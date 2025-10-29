@@ -40,9 +40,9 @@ The script generates several output files:
 
 ### Color Data Files
 
-- `palette_[image_name].txt`: List of colors in hex format
-- `palette_[image_name].json`: JSON format with additional color information
-- `palette_[image_name].png`: Visual color palette with swatches
+- `[image_name]_palette.txt`: List of colors in hex format
+- `[image_name]_palette.json`: JSON format with additional color information
+- `[image_name]_palette.png`: Visual color palette with swatches
 
 ### Example Output Format
 
