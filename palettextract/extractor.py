@@ -22,29 +22,34 @@ class ColorExtractor():
     """
 
     def __init__(self, verbose=False):
-        self.limit = 64
-        self.size = 1020
+        self.colors_row = 12
         self.logger = pu.VerboseLogger(verbose)
         self.iscanner = ImageScanner()
+        self.destination = None
 
-    def color_palette(self, input_path: Path) -> dict:
+    def color_palette(self, input_path: Path) -> list:
         "Generate the color palette"
-        result = {}
         self.logger.log(f"Extracting colors from {input_path}")
-        destination = pu.get_file_dir(input_path)
+        self.destination = pu.get_file_dir(input_path)
         image_files = self.iscanner.scan_directory(input_path)
-        for file_path in image_files:
-            image = Image.open(file_path).convert('RGB')
-            colors = self.__get_colors(image)
-            filename = pu.get_name_by_path(file_path, False)
-            # generate files
-            self.logger.log(f"Generating color palette from {file_path.name} with {len(colors)} colors")
-            palette = self.__generate_palette(colors, destination, filename)
-            txt = self.__generate_txt(colors, destination, filename)
-            jsn = self.__generate_json(input_path.name, colors, destination, filename)
-            self.logger.log(f"Files saved to {destination}")
-            result[file_path.name] = [palette, txt, jsn]
-        return result
+        return list(map(self.image_process, image_files))
+
+    def image_process(self, file_path: Path) -> dict:
+        "Process single image"
+        image = Image.open(file_path).convert('RGB')
+        colors = self.__get_colors(image)
+        filename = pu.get_name_by_path(file_path, False)
+        # generate files
+        self.logger.log(f"Generating color palette from {file_path.name} with {len(colors)} colors")
+        palette = self.__generate_palette(colors, self.destination, filename)
+        txt = self.__generate_txt(colors, self.destination, filename)
+        jsn = self.__generate_json(
+            file_path.name, colors, self.destination, filename)
+        self.logger.log(f"Files saved to {self.destination}")
+        return {
+            'filename': file_path.name,
+            'files': [palette, txt, jsn]
+        }
 
     def __get_colors(self, image):
         "Get colors in image"
@@ -52,7 +57,7 @@ class ColorExtractor():
         colors_tmp = {}
         parents = []
         # resize the image to speed up the processing
-        thumb = image.resize((300, 300), resample=Image.NEAREST)
+        thumb = image.resize((500, 500), resample=Image.NEAREST)
         image_colors = thumb.getcolors(1600*1600)
         # arrange the colors
         for color in image_colors:
@@ -64,12 +69,13 @@ class ColorExtractor():
         # filter them
         for color in parents:
             color_series = pd.Series(pu.sort_by_count(colors_tmp[color]))
-            colors_sample = color_series.sample(n=25, replace=True)
+            colors_sample = color_series.sample(n=50, replace=True)
             for color_sample in colors_sample:
                 colors.append({'parent': color, 'color': color_sample})
         # return just a sample
+        limit = self.colors_row * self.colors_row
         palette_series = pd.Series(colors)
-        return palette_series.sample(n=self.limit, replace=False)
+        return palette_series.sample(n=limit, replace=False)
 
     def __get_parent(self, color):
         "Return closer color"
@@ -84,13 +90,14 @@ class ColorExtractor():
                 color_parent = base
         return color_parent
 
-    def __generate_palette(self, colors, folder, name) -> str:
+    def __generate_palette(self, colors, folder, name) -> Path:
         "Generate paletter from image"
         filename = pu.get_destination_path(folder, f"palette_{name}.png")
         x_pos, y_pos = 10, 10
         sqr_side = 125
+        size = (sqr_side * self.colors_row) + 20
         count = 0
-        image = Image.new('RGB', (self.size, self.size), '#fbfbfb')
+        image = Image.new('RGB', (size, size), '#fbfbfb')
         draw = ImageDraw.Draw(image)
         for color in colors:
             position = [x_pos, y_pos, (x_pos + sqr_side), (y_pos + sqr_side)]
@@ -101,7 +108,7 @@ class ColorExtractor():
                 width=0
             )
             y_pos += sqr_side
-            if count >= 7:
+            if count >= self.colors_row - 1:
                 count = 0
                 x_pos += sqr_side
                 y_pos = 10
@@ -110,15 +117,15 @@ class ColorExtractor():
         image.save(filename, format='PNG', quality=95)
         return filename
 
-    def __generate_txt(self, colors, folder, name) -> str:
+    def __generate_txt(self, colors, folder, name) -> Path:
         "Generate text file with colors"
         filename = pu.get_destination_path(folder, f"palette_{name}.txt")
         with open(filename, 'w', encoding='utf-8') as f:
             for color in colors:
                 f.write(f"{color['color'][1]}\n")
         return filename
-    
-    def __generate_json(self, original_file, colors, folder, name) -> str:
+
+    def __generate_json(self, original_file, colors, folder, name) -> Path:
         "Generate json file with colors"
         filename = pu.get_destination_path(folder, f"palette_{name}.json")
         response = {}
