@@ -40,7 +40,8 @@ class ColorExtractor():
         colors = self.__get_colors(image)
         filename = pu.get_name_by_path(file_path, False)
         # generate files
-        self.logger.log(f"Generating color palette from {file_path.name} with {len(colors)} colors")
+        self.logger.log(
+            f"Generating color palette from {file_path.name} with {len(colors)} colors")
         palette = self.__generate_palette(colors, self.destination, filename)
         txt = self.__generate_txt(colors, self.destination, filename)
         jsn = self.__generate_json(
@@ -53,12 +54,21 @@ class ColorExtractor():
 
     def __get_colors(self, image):
         "Get colors in image"
-        colors = []
-        colors_tmp = {}
-        parents = []
         # resize the image to speed up the processing
         thumb = image.resize((500, 500), resample=Image.NEAREST)
         image_colors = thumb.getcolors(1600*1600)
+        # return just a sample
+        limit = self.colors_row ** 2
+        palette_series = pd.Series(
+            self.__sort_colors_from_colors_list(image_colors)
+        )
+        return palette_series.sample(n=limit, replace=False)
+
+    def __sort_colors_from_colors_list(self, image_colors: list) -> list:
+        "Sort and classify colors from a colors list"
+        colors = []
+        colors_tmp = {}
+        parents = []
         # arrange the colors
         for color in image_colors:
             parent = self.__get_parent(color)
@@ -72,10 +82,7 @@ class ColorExtractor():
             colors_sample = color_series.sample(n=50, replace=True)
             for color_sample in colors_sample:
                 colors.append({'parent': color, 'color': color_sample})
-        # return just a sample
-        limit = self.colors_row * self.colors_row
-        palette_series = pd.Series(colors)
-        return palette_series.sample(n=limit, replace=False)
+        return colors
 
     def __get_parent(self, color):
         "Return closer color"
